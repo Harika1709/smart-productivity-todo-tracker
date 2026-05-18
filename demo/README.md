@@ -14,6 +14,6 @@ Watch the complete working demonstration of the **Smart Productivity Todo Tracke
 
 ### ▶️ Demo Preview
 
-[Click Here to Watch Demo Video](demo-video.mp4)
+[Click Here to Watch Demo Video](demo-video.mov)
 
-> Replace `demo-video.mp4` with your uploaded video filename or GitHub video link.
+> Replace `demo-video.mov` with your uploaded video filename or GitHub video link.
