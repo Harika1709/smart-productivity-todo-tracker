@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Productivity Todo Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+    <i class="fa-solid fa-moon" id="themeIcon"></i>
+  </button>
+
+  <header class="hero">
+    <div class="hero-badge"><i class="fa-solid fa-bolt"></i> Productivity OS</div>
+    <h1 class="hero-title">Smart Productivity<br /><span class="gradient-text">Todo Tracker</span></h1>
+    <p class="hero-sub">Track your daily goals, monitor progress, and boost productivity beautifully.</p>
+    <div class="live-clock">
+      <span id="liveDateDisplay"></span>
+      <span class="clock-sep">|</span>
+      <span id="liveTimeDisplay"></span>
+    </div>
+  </header>
+
+  <main class="app-wrapper">
+
+    <!-- ══ ADD TASK ══ -->
+    <section class="glass-card add-task-card">
+      <h2 class="section-title"><i class="fa-solid fa-circle-plus"></i> Add New Task</h2>
+      <div class="add-task-form">
+        <button class="btn-secondary" onclick="resetTodoList()">
+          <i class="fa-solid fa-rotate-left"></i> Restart Todo
+        </button>
+
+        <div class="input-group">
+          <i class="fa-solid fa-pen-to-square input-icon"></i>
+          <input type="text" id="taskInput" placeholder="What do you want to accomplish?" maxlength="120" />
+        </div>
+
+        <div class="form-row">
+          <select id="categorySelect">
+            <option value="general">🗂 General</option>
+            <option value="work">💼 Coding</option>
+            <option value="health">🏃 College</option>
+            <option value="learning">📚 Learning</option>
+          </select>
+          <select id="prioritySelect">
+            <option value="medium">🟡 Medium</option>
+            <option value="high">🔴 High</option>
+            <option value="low">🟢 Low</option>
+          </select>
+        </div>
+
+        <div class="form-row bottom-row">
+          <!-- Calendar: pick a date. Blank = today -->
+          <div class="cal-picker-wrap">
+            <i class="fa-solid fa-calendar-days cal-icon"></i>
+            <input type="date" id="taskDate" />
+            <span class="cal-hint">Blank&nbsp;=&nbsp;Today</span>
+          </div>
+
+          <!-- Daily repeat toggle -->
+          <label class="repeat-toggle" title="Auto-add this task every day">
+            <input type="checkbox" id="isDaily" />
+            <span class="repeat-pill">
+              <i class="fa-solid fa-rotate"></i> Daily Repeat
+            </span>
+          </label>
+
+          <button class="btn-primary" id="addTaskBtn">
+            <i class="fa-solid fa-plus"></i> Add Task
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══ DATE NAVIGATOR ══ -->
+    <section class="date-nav glass-card">
+      <button class="dnav-btn" id="prevDayBtn"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="dnav-center">
+        <span class="dnav-label" id="dateNavLabel">Today</span>
+        <span class="dnav-sub"   id="dateNavSub"></span>
+      </div>
+      <button class="dnav-btn" id="nextDayBtn"><i class="fa-solid fa-chevron-right"></i></button>
+      <button class="dnav-today-btn" id="jumpToday">Go to Today</button>
+    </section>
+
+    <!-- ══ STATS ══ -->
+    <section class="stats-strip">
+      <div class="stat-pill" id="statTotal">
+        <i class="fa-solid fa-list-check"></i>
+        <div><span class="stat-num" id="totalCount">0</span><span class="stat-label">Total</span></div>
+      </div>
+      <div class="stat-pill" id="statCompleted">
+        <i class="fa-solid fa-circle-check"></i>
+        <div><span class="stat-num" id="completedCount">0</span><span class="stat-label">Done</span></div>
+      </div>
+      <div class="stat-pill" id="statRemaining">
+        <i class="fa-solid fa-hourglass-half"></i>
+        <div><span class="stat-num" id="remainingCount">0</span><span class="stat-label">Pending</span></div>
+      </div>
+      <div class="stat-pill stat-pill--fire">
+        <i class="fa-solid fa-fire-flame-curved"></i>
+        <div><span class="stat-num" id="percentDisplay">0%</span><span class="stat-label">Complete</span></div>
+      </div>
+    </section>
+
+    <!-- ══ PROGRESS BAR ══ -->
+    <section class="glass-card progress-card">
+      <div class="progress-header">
+        <span id="progressMessage">No tasks yet — let's get started! ✨</span>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-glow" id="progressGlow"></div>
+      </div>
+    </section>
+
+    <!-- ══ FILTER + SEARCH ══ -->
+    <section class="filter-bar">
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="pending">Pending</button>
+        <button class="filter-tab" data-filter="completed">Completed</button>
+      </div>
+      <div class="search-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Search tasks..." />
+      </div>
+    </section>
+
+    <!-- ══ TASK LISTS ══ -->
+    <section class="task-list-section">
+      <div class="task-group">
+        <h3 class="group-label">
+          <i class="fa-solid fa-circle-half-stroke"></i> Pending
+          <span class="badge" id="pendingBadge">0</span>
+        </h3>
+        <ul class="task-list" id="pendingList"></ul>
+        <div class="empty-state" id="emptyPending">
+          <i class="fa-solid fa-rocket"></i>
+          <p>No tasks for this day yet!</p>
+        </div>
+      </div>
+
+      <div class="task-group">
+        <h3 class="group-label">
+          <i class="fa-solid fa-circle-check"></i> Completed
+          <span class="badge badge--green" id="completedBadge">0</span>
+        </h3>
+        <ul class="task-list" id="completedList"></ul>
+        <div class="empty-state hidden" id="emptyCompleted">
+          <i class="fa-solid fa-check-double"></i>
+          <p>Nothing completed yet — you've got this!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ DASHBOARD ══ -->
+    <section class="dashboard">
+      <h2 class="section-title dash-title"><i class="fa-solid fa-gauge-high"></i> Productivity Dashboard</h2>
+      <div class="dash-grid">
+
+        <div class="dash-card glass-card">
+          <div class="dash-card-icon icon-today"><i class="fa-solid fa-sun"></i></div>
+          <h4>Today's Progress</h4>
+          <div class="circular-wrap">
+            <svg class="circular-chart" viewBox="0 0 36 36">
+              <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <path class="circle-fill" id="todayCircle" stroke-dasharray="0,100"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <text x="18" y="20.35" class="circle-text" id="todayPct">0%</text>
+            </svg>
+          </div>
+          <p class="dash-detail"><span id="todayDone">0</span> done · <span id="todayLeft">0</span> left</p>
+        </div>
+
+        <div class="dash-card glass-card">
+          <div class="dash-card-icon icon-weekly"><i class="fa-solid fa-calendar-week"></i></div>
+          <h4>Weekly Progress</h4>
+          <div class="bar-chart-wrap" id="weekBarChart"></div>
+          <p class="dash-detail"><span id="weeklyDone">0</span> done · <span id="weeklyPct">0%</span></p>
+        </div>
+
+        <div class="dash-card glass-card">
+          <div class="dash-card-icon icon-monthly"><i class="fa-solid fa-calendar-days"></i></div>
+          <h4>Monthly Stats</h4>
+          <div class="monthly-stats">
+            <div class="m-stat"><span class="m-val" id="monthTotal">0</span><span class="m-lbl">Total</span></div>
+            <div class="m-stat"><span class="m-val" id="monthDone">0</span><span class="m-lbl">Done</span></div>
+            <div class="m-stat"><span class="m-val" id="monthPct">0%</span><span class="m-lbl">Rate</span></div>
+          </div>
+          <div class="progress-track slim"><div class="progress-fill violet" id="monthFill"></div></div>
+        </div>
+
+        <div class="dash-card glass-card">
+          <div class="dash-card-icon icon-score"><i class="fa-solid fa-star"></i></div>
+          <h4>Productivity Score</h4>
+          <div class="score-ring-wrap">
+            <div class="score-ring" id="scoreRing">
+              <span class="score-value" id="scoreVal">0</span>
+              <span class="score-label">/ 100</span>
+            </div>
+          </div>
+          <p class="motivational" id="motivationalMsg">Start adding tasks to track your score! 🚀</p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══ EDIT MODAL ══ -->
+  <div class="modal-backdrop" id="editModal">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-pen-nib"></i> Edit Task</h3>
+        <button class="modal-close" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="input-group">
+        <i class="fa-solid fa-pen-to-square input-icon"></i>
+        <input type="text" id="editTaskInput" placeholder="Update your task..." maxlength="120" />
+      </div>
+      <div class="form-row">
+        <select id="editCategorySelect">
+          <option value="general">🗂 General</option>
+          <option value="work">💼 Coding</option>
+          <option value="health">🏃 College</option>
+          <option value="learning">📚 Learning</option>
+        </select>
+        <select id="editPrioritySelect">
+          <option value="medium">🟡 Medium</option>
+          <option value="high">🔴 High</option>
+          <option value="low">🟢 Low</option>
+        </select>
+      </div>
+      <div class="cal-picker-wrap">
+        <i class="fa-solid fa-calendar-days cal-icon"></i>
+        <input type="date" id="editTaskDate" />
+        <span class="cal-hint">Task date</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelEdit">Cancel</button>
+        <button class="btn-primary"   id="saveEdit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="script.js"></script>
+</body>
+</html>
